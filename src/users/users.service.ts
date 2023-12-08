@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, UnprocessableEntityException } from '@nestjs/common';
 import * as uuid from 'uuid';
 import { EmailService } from 'src/email/email.service';
 import { UserInfo } from './UserInfo';
@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { ulid } from 'ulid';
-import e from 'express';
 
 @Injectable()
 export class UsersService {
@@ -32,18 +31,59 @@ export class UsersService {
     }
 
     async saveUser(name: string, email: string, password: string, signupVerifyToekn: string) {
-        const userExist = await this.checkUserExists(email);
-        console.log(userExist);
-        if(userExist){
-            throw new UnprocessableEntityException("해당 이메일로 가입할 수 없습니다.");
-        }
-        const user = new UserEntity();
-        user.id = ulid();
-        user.name = name;
-        user.email = email;
-        user.password = password;
-        user.signupVerifyToken = signupVerifyToekn;
-        await this.userRepository.save(user);
+        // const userExist = await this.checkUserExists(email);
+        // if(userExist){
+        //     throw new UnprocessableEntityException("해당 이메일로 가입할 수 없습니다.");
+        // }
+        // const user = new UserEntity();
+        // user.id = ulid();
+        // user.name = name;
+        // user.email = email;
+        // user.password = password;
+        // user.signupVerifyToken = signupVerifyToekn;
+        // await this.userRepository.save(user);
+
+        // Transaction 1
+
+        // const queryRunner = this.dataSource.createQueryRunner();
+
+        // await queryRunner.connect();
+        // await queryRunner.startTransaction();
+
+        // try {
+        //     const user = new UserEntity();
+        //     user.id = ulid();
+        //     user.name = name;
+        //     user.email = email;
+        //     user.password = password;
+        //     user.signupVerifyToken = signupVerifyToekn;
+
+        //     await queryRunner.manager.save(user);
+
+        //     // throw new InternalServerErrorException();
+
+        //     await queryRunner.commitTransaction();
+        // }catch(e){
+
+        //     await queryRunner.rollbackTransaction();
+        // }finally{
+        //     await queryRunner.release();
+        // }
+
+        // Transaction 2
+
+        await this.dataSource.transaction(async manager => {
+            const user = new UserEntity();
+            user.id = ulid();
+            user.name = name;
+            user.email = email;
+            user.password = password;
+            user.signupVerifyToken = signupVerifyToekn;
+
+            await manager.save(user);
+            // throw new InternalServerErrorException();
+            
+        })
     }
 
     private async sendMemberJoinEmail(email: string, signupVerifyToekn: string) {

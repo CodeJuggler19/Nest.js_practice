@@ -23,7 +23,10 @@ import { UserEntity } from './users/user.entity';
     password: 'jin1234',//process.env.DATABASE_PASSWORD,
     database: 'test',
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
-    synchronize: true, //process.env.DATABASE_SYNCHRONIZE === 'true',
+    synchronize: false, //process.env.DATABASE_SYNCHRONIZE === 'true',
+    migrationsRun: false,
+    migrations: [__dirname + '/**/migrations/*.js'],
+    migrationsTableName: 'migrations'
   }),
   ],
   controllers: [AppController],
